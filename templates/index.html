@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Support Ticket System</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 40px 20px;
+      color: #2d3748;
+    }
+
+    .container {
+      max-width: 1000px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      padding: 40px;
+    }
+
+    h1 {
+      font-size: 30px;
+      font-weight: 700;
+      margin-bottom: 24px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    h2 { font-size: 18px; margin-bottom: 12px; color: #1a202c; }
+
+    .stats-bar {
+      display: flex;
+      gap: 16px;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+    }
+
+    .stat-card {
+      background: #f7fafc;
+      border: 2px solid #e2e8f0;
+      border-radius: 10px;
+      padding: 14px 20px;
+      min-width: 100px;
+    }
+
+    .stat-card .num { font-size: 22px; font-weight: 700; color: #667eea; }
+    .stat-card .label { font-size: 12px; color: #718096; text-transform: uppercase; }
+
+    form {
+      background: #f8f9fa;
+      padding: 20px;
+      border-radius: 12px;
+      margin-bottom: 24px;
+      border: 2px solid #e2e8f0;
+      display: grid;
+      gap: 12px;
+      grid-template-columns: 1fr 1fr;
+    }
+
+    form.full-width { grid-template-columns: 1fr; }
+
+    label {
+      display: block;
+      font-weight: 600;
+      font-size: 12px;
+      text-transform: uppercase;
+      color: #4a5568;
+      margin-bottom: 4px;
+    }
+
+    input[type="text"], select, textarea {
+      width: 100%;
+      padding: 10px 12px;
+      font-size: 14px;
+      border: 2px solid #e2e8f0;
+      border-radius: 8px;
+      background: white;
+      color: #2d3748;
+      font-family: inherit;
+    }
+
+    input:focus, select:focus, textarea:focus {
+      outline: none;
+      border-color: #667eea;
+    }
+
+    textarea { resize: vertical; min-height: 60px; }
+
+    button {
+      padding: 10px 24px;
+      font-size: 14px;
+      font-weight: 600;
+      color: white;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      grid-column: 1 / -1;
+      justify-self: start;
+    }
+
+    button:hover { transform: translateY(-1px); }
+
+    .toolbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    select#status-filter { width: 200px; }
+
+    #result {
+      margin: 12px 0;
+      padding: 12px 16px;
+      background: #e0e7ff;
+      border-radius: 8px;
+      color: #5a67d8;
+      font-weight: 500;
+      display: none;
+    }
+
+    #result.show { display: block; }
+    #result.error { background: #fee2e2; color: #b91c1c; }
+
+    table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+      margin-bottom: 32px;
+    }
+
+    thead { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+    th { text-align: left; padding: 12px 16px; color: white; font-size: 12px; text-transform: uppercase; }
+    tbody tr { background: white; cursor: pointer; }
+    tbody tr:nth-child(even) { background: #f8f9fa; }
+    tbody tr:hover { background: #e0e7ff; }
+    td { padding: 12px 16px; border-bottom: 1px solid #e2e8f0; font-size: 14px; }
+
+    .badge {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    .badge.open { background: #fef3c7; color: #92400e; }
+    .badge.in_progress { background: #dbeafe; color: #1e40af; }
+    .badge.resolved { background: #d1fae5; color: #065f46; }
+
+    .badge.low { background: #f3f4f6; color: #4b5563; }
+    .badge.medium { background: #fef3c7; color: #92400e; }
+    .badge.high { background: #fee2e2; color: #b91c1c; }
+
+    .delete-btn {
+      background: #ef4444;
+      padding: 6px 12px;
+      font-size: 12px;
+      grid-column: auto;
+    }
+
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.7);
+      z-index: 1000;
+    }
+
+    .modal.active {
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      padding: 40px 20px;
+      overflow-y: auto;
+    }
+
+    .modal-content {
+      background: white;
+      border-radius: 16px;
+      max-width: 700px;
+      width: 100%;
+      padding: 32px;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 16px;
+      padding-bottom: 16px;
+      border-bottom: 2px solid #e2e8f0;
+    }
+
+    .modal-header h2 { margin: 0; }
+
+    .close-btn {
+      background: #6b7280;
+      padding: 6px 14px;
+      font-size: 13px;
+      grid-column: auto;
+    }
+
+    .status-row {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .status-row select { width: 160px; }
+    .status-row button { grid-column: auto; padding: 8px 16px; }
+
+    .message {
+      background: #f8f9fa;
+      border-left: 4px solid #667eea;
+      border-radius: 6px;
+      padding: 12px 16px;
+      margin-bottom: 10px;
+    }
+
+    .message .author { font-weight: 700; font-size: 13px; color: #1a202c; }
+    .message .time { font-size: 11px; color: #a0aec0; margin-left: 8px; }
+    .message .text { margin-top: 4px; font-size: 14px; color: #2d3748; }
+
+    .empty { text-align: center; padding: 24px; color: #a0aec0; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Support Tickets</h1>
+
+    <div class="stats-bar" id="stats-bar"></div>
+
+    <h2>Create a new ticket</h2>
+    <form id="ticket-form">
+      <div>
+        <label for="title">Title</label>
+        <input type="text" id="title" required>
+      </div>
+      <div>
+        <label for="created_by">Your name</label>
+        <input type="text" id="created_by" required>
+      </div>
+      <div>
+        <label for="priority">Priority</label>
+        <select id="priority">
+          <option value="low">Low</option>
+          <option value="medium" selected>Medium</option>
+          <option value="high">High</option>
+        </select>
+      </div>
+      <div>
+        <label for="category">Category (optional)</label>
+        <input type="text" id="category" placeholder="e.g. billing, technical">
+      </div>
+      <button type="submit">Create ticket</button>
+    </form>
+
+    <div id="result"></div>
+
+    <div class="toolbar">
+      <h2>All tickets</h2>
+      <select id="status-filter">
+        <option value="">All statuses</option>
+        <option value="open">Open</option>
+        <option value="in_progress">In progress</option>
+        <option value="resolved">Resolved</option>
+      </select>
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Title</th>
+          <th>Status</th>
+          <th>Priority</th>
+          <th>Created by</th>
+          <th>Messages</th>
+          <th>Created</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="tickets-body"></tbody>
+    </table>
+  </div>
+
+  <!-- Ticket detail modal -->
+  <div id="ticket-modal" class="modal" onclick="if(event.target === this) closeModal()">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 id="modal-title"></h2>
+        <button class="close-btn" onclick="closeModal()">Close</button>
+      </div>
+
+      <div class="status-row">
+        <select id="status-select">
+          <option value="open">Open</option>
+          <option value="in_progress">In progress</option>
+          <option value="resolved">Resolved</option>
+        </select>
+        <button onclick="updateStatus()">Update status</button>
+        <button class="delete-btn" onclick="deleteTicket()">Delete ticket</button>
+      </div>
+
+      <h2>Messages</h2>
+      <div id="messages-list"></div>
+
+      <form id="message-form" class="full-width" style="margin-top: 16px;">
+        <div>
+          <label for="msg-author">Your name</label>
+          <input type="text" id="msg-author" required>
+        </div>
+        <div>
+          <label for="msg-text">Message</label>
+          <textarea id="msg-text" required></textarea>
+        </div>
+        <button type="submit">Add message</button>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    let currentTicketId = null;
+
+    function showResult(msg, isError = false) {
+      const el = document.getElementById("result");
+      el.textContent = msg;
+      el.className = "show" + (isError ? " error" : "");
+      setTimeout(() => { el.className = ""; }, 4000);
+    }
+
+    async function loadStats() {
+      const resp = await fetch("/api/stats");
+      const data = await resp.json();
+      const bar = document.getElementById("stats-bar");
+      bar.innerHTML = `<div class="stat-card"><div class="num">${data.total}</div><div class="label">Total</div></div>`;
+      data.by_status.forEach(s => {
+        bar.innerHTML += `<div class="stat-card"><div class="num">${s.count}</div><div class="label">${s.status.replace('_',' ')}</div></div>`;
+      });
+    }
+
+    async function loadTickets() {
+      const status = document.getElementById("status-filter").value;
+      const url = status ? `/api/tickets?status=${status}` : "/api/tickets";
+      const resp = await fetch(url);
+      const data = await resp.json();
+      const body = document.getElementById("tickets-body");
+
+      if (!resp.ok) {
+        body.innerHTML = `<tr><td colspan="7" class="empty">Error: ${data.error}</td></tr>`;
+        return;
+      }
+      if (data.length === 0) {
+        body.innerHTML = `<tr><td colspan="7" class="empty">No tickets found</td></tr>`;
+        return;
+      }
+
+      body.innerHTML = "";
+      data.forEach(t => {
+        const tr = document.createElement("tr");
+        tr.onclick = () => openTicket(t.ticket_id);
+        tr.innerHTML = `
+          <td>${t.title}</td>
+          <td><span class="badge ${t.status}">${t.status.replace('_',' ')}</span></td>
+          <td><span class="badge ${t.priority}">${t.priority}</span></td>
+          <td>${t.created_by}</td>
+          <td>${t.message_count}</td>
+          <td>${new Date(t.created_at).toLocaleDateString()}</td>
+          <td><button class="delete-btn" onclick="event.stopPropagation(); quickDelete(${t.ticket_id})">Delete</button></td>
+        `;
+        body.appendChild(tr);
+      });
+    }
+
+    document.getElementById("status-filter").addEventListener("change", loadTickets);
+
+    document.getElementById("ticket-form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const payload = {
+        title: document.getElementById("title").value,
+        created_by: document.getElementById("created_by").value,
+        priority: document.getElementById("priority").value,
+        category: document.getElementById("category").value || null,
+      };
+      const resp = await fetch("/api/tickets", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const data = await resp.json();
+      if (!resp.ok) { showResult("Error: " + data.error, true); return; }
+      showResult("Ticket created");
+      document.getElementById("ticket-form").reset();
+      loadTickets();
+      loadStats();
+    });
+
+    async function openTicket(ticketId) {
+      currentTicketId = ticketId;
+      const resp = await fetch(`/api/tickets/${ticketId}`);
+      const data = await resp.json();
+      if (!resp.ok) { showResult("Error: " + data.error, true); return; }
+
+      document.getElementById("modal-title").textContent = data.title;
+      document.getElementById("status-select").value = data.status;
+
+      const list = document.getElementById("messages-list");
+      list.innerHTML = data.messages.length
+        ? ""
+        : `<div class="empty">No messages yet</div>`;
+      data.messages.forEach(m => {
+        list.innerHTML += `
+          <div class="message">
+            <span class="author">${m.author}</span>
+            <span class="time">${new Date(m.created_at).toLocaleString()}</span>
+            <div class="text">${m.message_text}</div>
+          </div>`;
+      });
+
+      document.getElementById("ticket-modal").classList.add("active");
+    }
+
+    function closeModal() {
+      document.getElementById("ticket-modal").classList.remove("active");
+      currentTicketId = null;
+    }
+
+    async function updateStatus() {
+      const status = document.getElementById("status-select").value;
+      const resp = await fetch(`/api/tickets/${currentTicketId}/status`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status }),
+      });
+      const data = await resp.json();
+      if (!resp.ok) { showResult("Error: " + data.error, true); return; }
+      showResult("Status updated");
+      loadTickets();
+      loadStats();
+    }
+
+    async function deleteTicket() {
+      if (!confirm("Delete this ticket and all its messages? This cannot be undone.")) return;
+      const resp = await fetch(`/api/tickets/${currentTicketId}`, { method: "DELETE" });
+      const data = await resp.json();
+      if (!resp.ok) { showResult("Error: " + data.error, true); return; }
+      showResult("Ticket deleted");
+      closeModal();
+      loadTickets();
+      loadStats();
+    }
+
+    async function quickDelete(ticketId) {
+      if (!confirm("Delete this ticket and all its messages? This cannot be undone.")) return;
+      const resp = await fetch(`/api/tickets/${ticketId}`, { method: "DELETE" });
+      const data = await resp.json();
+      if (!resp.ok) { showResult("Error: " + data.error, true); return; }
+      showResult("Ticket deleted");
+      loadTickets();
+      loadStats();
+    }
+
+    document.getElementById("message-form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const payload = {
+        author: document.getElementById("msg-author").value,
+        message_text: document.getElementById("msg-text").value,
+      };
+      const resp = await fetch(`/api/tickets/${currentTicketId}/messages`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const data = await resp.json();
+      if (!resp.ok) { showResult("Error: " + data.error, true); return; }
+      document.getElementById("message-form").reset();
+      openTicket(currentTicketId);
+      loadStats();
+    });
+
+    loadStats();
+    loadTickets();
+  </script>
+</body>
+</html>
