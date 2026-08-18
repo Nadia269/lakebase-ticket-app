@@ -1,6 +1,4 @@
-Here's a complete README you can copy-paste directly into GitHub (click "Add a README" → paste this in):
 
-```markdown
 # Lakebase Ticket App
 
 A lightweight internal support ticketing system built with Flask and deployed as a Databricks App, backed entirely by **Lakebase** (Databricks-managed Postgres) for persistent, transactional storage.
@@ -126,6 +124,4 @@ No manual SQL, no credentials in code — everything flows through the Databrick
 **Lakebase vs. a traditional analytics table:** Lakebase is a fully managed, transactional Postgres database built for live application data — fast reads/writes, foreign keys, row-level updates. A traditional analytics table is optimized for large batch reads/aggregations, not frequent small transactional writes like creating one ticket or adding one message.
 
 **Next feature:** Assign tickets to specific support agents, track ownership, and send email notifications on status changes.
-```
 
-Want me to also add a `LICENSE` or `.gitignore` suggestion, or is this good as-is?
